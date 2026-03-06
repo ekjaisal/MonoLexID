@@ -1,0 +1,67 @@
+name: Cross-Platform Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install FPC on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y fpc
+
+      - name: Install FPC on macOS
+        if: runner.os == 'macOS'
+        run: brew update && brew install fpc
+
+      - name: Install FPC on Windows
+        if: runner.os == 'Windows'
+        run: choco install freepascal --yes
+
+      - name: Add FPC to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "C:/tools/freepascal/bin/i386-Win32" >> $GITHUB_PATH
+
+      - name: Compile Library
+        run: fpc MonoLexID.pas -vewh -B
+
+      - name: Compile Tests (threadvar mode)
+        run: fpc tests/TestRunner.pas -vewh -B -FEtests
+
+      - name: Run Tests (threadvar mode, Windows)
+        if: runner.os == 'Windows'
+        run: .\tests\TestRunner.exe
+
+      - name: Run Tests (threadvar mode, Linux and macOS)
+        if: runner.os != 'Windows'
+        run: ./tests/TestRunner
+
+      - name: Compile Tests (global monotonic mode, Windows)
+        if: runner.os == 'Windows'
+        run: |
+          fpc tests/TestRunner.pas -dMONOLEXID_GLOBAL_MONOTONIC -vewh -B -FEtests
+          Rename-Item -Path "tests\TestRunner.exe" -NewName "TestRunner_global.exe"
+
+      - name: Compile Tests (global monotonic mode, Linux and macOS)
+        if: runner.os != 'Windows'
+        run: fpc tests/TestRunner.pas -dMONOLEXID_GLOBAL_MONOTONIC -vewh -B -FEtests -oTestRunner_global
+
+      - name: Run Tests (global monotonic mode, Windows)
+        if: runner.os == 'Windows'
+        run: .\tests\TestRunner_global.exe
+
+      - name: Run Tests (global monotonic mode, Linux and macOS)
+        if: runner.os != 'Windows'
+        run: ./tests/TestRunner_global
