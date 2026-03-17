@@ -88,7 +88,7 @@ MonoLexID compiles and functions under:
 
 ## Acknowledgements
 
-This project has benefitted significantly from Google [Gemini 3](https://gemini.google/about)’s assistance for ideation, code generation, and refactoring.
+This project has benefitted significantly from Google [Gemini 3.1 Pro](https://deepmind.google/models/model-cards/gemini-3-1-pro)’s assistance for ideation, code generation, and refactoring.
 
 ## License
 
